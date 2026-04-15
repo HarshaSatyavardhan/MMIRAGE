@@ -195,8 +195,11 @@ class LLMProcessor(BaseProcessor[LLMOutputVar]):
                     if output_var.output_type == "JSON":
                         try:
                             value = json.loads(value)
+                            if output_var.expand:
+                                if not isinstance(value, list):
+                                    value = [value]
                         except json.JSONDecodeError:
-                            value = {}
+                            value = [] if output_var.expand else {}
                     results[global_i] = batch[global_i].with_variable(output_var.name, value)
 
             except Exception as e:
@@ -204,7 +207,10 @@ class LLMProcessor(BaseProcessor[LLMOutputVar]):
                     f"Batch generation failed for text-only samples in output '{output_var.name}': {e}"
                 )
                 for global_i in text_only_indices:
-                    empty_val = {} if output_var.output_type == "JSON" else ""
+                    if output_var.output_type == "JSON":
+                        empty_val = [] if output_var.expand else {}
+                    else:
+                        empty_val = ""
                     results[global_i] = batch[global_i].with_variable(output_var.name, empty_val)
 
         # Multimodal batch
@@ -257,8 +263,11 @@ class LLMProcessor(BaseProcessor[LLMOutputVar]):
                     if output_var.output_type == "JSON":
                         try:
                             value = json.loads(value)
+                            if output_var.expand:
+                                if not isinstance(value, list):
+                                    value = [value]
                         except json.JSONDecodeError:
-                            value = {}
+                            value = [] if output_var.expand else {}
                     results[global_i] = batch[global_i].with_variable(output_var.name, value)
 
             except Exception as e:
@@ -266,7 +275,10 @@ class LLMProcessor(BaseProcessor[LLMOutputVar]):
                     f"Batch generation failed for multimodal samples in output '{output_var.name}': {e}"
                 )
                 for global_i in multimodal_indices:
-                    empty_val = {} if output_var.output_type == "JSON" else ""
+                    if output_var.output_type == "JSON":
+                        empty_val = [] if output_var.expand else {}
+                    else:
+                        empty_val = ""
                     results[global_i] = batch[global_i].with_variable(output_var.name, empty_val)
 
         return [results[i] for i in range(nb_samples)]

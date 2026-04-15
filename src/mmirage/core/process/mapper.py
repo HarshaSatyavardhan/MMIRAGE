@@ -102,4 +102,38 @@ class MMIRAGEMapper:
                 batch_environment, output_var
             )
 
+        batch_environment = self._expand_environments(batch_environment)
+
         return batch_environment
+
+    def _expand_environments(
+        self, batch_env: List[VariableEnvironment]
+    ) -> List[VariableEnvironment]:
+        """Expand environments where an output variable with expand=True contains a list.
+
+        For each environment, if an expand variable holds a list of items,
+        the environment is duplicated once per item with the variable set to that item.
+
+        Args:
+            batch_env: List of variable environments after processing.
+
+        Returns:
+            Expanded list of variable environments.
+        """
+        expand_var = next(
+            (ov for ov in self.output_vars if getattr(ov, "expand", False)),
+            None,
+        )
+        if expand_var is None:
+            return batch_env
+
+        expanded: List[VariableEnvironment] = []
+        for env in batch_env:
+            items = env.get(expand_var.name)
+            if isinstance(items, list) and len(items) > 0:
+                for item in items:
+                    expanded.append(env.with_variable(expand_var.name, item))
+            else:
+                expanded.append(env)
+
+        return expanded

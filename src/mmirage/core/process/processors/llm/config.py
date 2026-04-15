@@ -103,6 +103,7 @@ class LLMOutputVar(OutputVar):
     prompt: str = ""
     output_schema: List[str] = field(default_factory=list)
     output_type: str = ""
+    expand: bool = False
 
     def get_output_schema(self) -> Optional[Type[BaseModel]]:
         """Generate a Pydantic model for JSON output validation.
